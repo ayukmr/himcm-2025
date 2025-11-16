@@ -8,6 +8,7 @@ CREATE TABLE centers AS SELECT * FROM read_csv_auto('../fav/census_centers.csv',
 CREATE TABLE energy AS SELECT * FROM read_csv_auto('../env/data_energy.csv', header=true);
 CREATE TABLE games AS SELECT * FROM read_csv_auto('../fav/kaggle_games.csv', header=true);
 CREATE TABLE renewables AS SELECT * FROM read_csv_auto('accc_renewables.csv', header=true);
+CREATE TABLE network AS SELECT * FROM read_csv_auto('boeing_network.csv', header=true);
 
 CREATE MACRO PARSE(x) AS
   CASE
@@ -55,7 +56,9 @@ SELECT
   PARSE(e."Industry Natural Gas  GHG emissions (mtons CO2e)") AS industry_gas_co2e,
   PARSE(e."On-road Transportation Gasoline  GHG emissions (mtons CO2e)") AS transport_gas_co2e,
   PARSE(e."On-road Transportation Diesel  GHG emissions (mtons CO2e)") AS transport_diesel_co2e,
-  SUM(r."Size of Purchase (MW)") AS renewables_amt
+  SUM(r."Size of Purchase (MW)") AS renewables_amt,
+  n.area_km,
+  n.street_length_total
 FROM cities c
 LEFT JOIN dist d
   ON d.city = c.city AND d.state_id = c.state_id
@@ -73,11 +76,34 @@ LEFT JOIN tdmean td
   ON ABS(td.lat - c.lat) < 0.036 AND ABS(td.lng - c.lng) < 0.05
 LEFT JOIN energy e
   ON e.city_name = c.city || ' city' AND e.state_abbr = c.state_id
-LEFT JOIN renewables r
-  ON POSITION(c.city IN r."Buyer Name") > 0 AND r.State = c.state_name
 LEFT JOIN games g
   ON g.City = c.city || ', ' || c.state_name
+LEFT JOIN renewables r
+  ON POSITION(c.city IN r."Buyer Name") > 0 AND r.State = c.state_name
+LEFT JOIN network n
+  ON n.city = c.city AND n.state = c.state_id
 WHERE c.population > 50000
-GROUP BY c.city, c.state_id, c.state_name, c.population, c.density, c.lat, c.lng, f.count, median_aqi, d.average_dist, visitation, residential_elec_co2e, residential_gas_co2e, commercial_elec_co2e, commercial_gas_co2e, industry_elec_co2e, industry_gas_co2e, transport_gas_co2e, transport_diesel_co2e;
+GROUP BY
+  c.city,
+  c.state_id,
+  c.state_name,
+  c.population,
+  c.density,
+  c.lat,
+  c.lng,
+  f.count,
+  median_aqi,
+  d.average_dist,
+  visitation,
+  residential_elec_co2e,
+  residential_gas_co2e,
+  commercial_elec_co2e,
+  commercial_gas_co2e,
+  industry_elec_co2e,
+  industry_gas_co2e,
+  transport_gas_co2e,
+  transport_diesel_co2e,
+  n.area_km,
+  n.street_length_total;
 
 COPY out TO 'output.csv' (FORMAT CSV, HEADER TRUE);
