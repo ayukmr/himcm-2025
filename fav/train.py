@@ -38,6 +38,9 @@ keys = [
 ]
 
 def fmt(d):
+    if 'state' in d and d['state'] not in ['CA', 'NV', 'AZ', 'OR']:
+        return None
+
     co2e = [float(d[k]) if d[k] else None for k in keys if k in d]
 
     return (
@@ -46,18 +49,13 @@ def fmt(d):
             float(d['longitude']),
             float(d['average_dist'])
         ],
-        [sum(co2e)] if None not in co2e and 'population' in d else None
+        [sum(co2e) / float(d['population'])] if None not in co2e and 'population' in d else None
     )
 
 train = load_data('train.csv')
 random.shuffle(train)
 
 train = [d for d in train if d[1]]
-
-def is_ca(lat, lon):
-    return 32 <= lat <= 42 and -125 <= lon <= -113
-
-train = [d for d in train if is_ca(d[0][0], d[0][1])]
 
 print(f'{len(train)} rows')
 
