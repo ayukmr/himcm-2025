@@ -48,3 +48,8 @@ https://data.openei.org/files/149/2016cityandcountyenergyprofiles.xlsb
 `boeing_network.csv`
 
 https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/F5UNSK
+
+
+`fhwa_highway.csv`
+
+https://www.fhwa.dot.gov/policyinformation/statistics/2022/xls/hm72.xls

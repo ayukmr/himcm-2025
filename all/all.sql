@@ -9,6 +9,7 @@ CREATE TABLE energy AS SELECT * FROM read_csv_auto('../env/data_energy.csv', hea
 CREATE TABLE games AS SELECT * FROM read_csv_auto('../fav/kaggle_games.csv', header=true);
 CREATE TABLE renewables AS SELECT * FROM read_csv_auto('accc_renewables.csv', header=true);
 CREATE TABLE network AS SELECT * FROM read_csv_auto('boeing_network.csv', header=true);
+CREATE TABLE highway AS SELECT * FROM read_csv_auto('fhwa_highway.csv', header=true);
 
 CREATE MACRO PARSE(x) AS
   CASE
@@ -58,7 +59,11 @@ SELECT
   PARSE(e."On-road Transportation Diesel  GHG emissions (mtons CO2e)") AS transport_diesel_co2e,
   SUM(r."Size of Purchase (MW)") AS renewables_amt,
   n.area_km,
-  n.street_length_total
+  n.street_length_total,
+  h."total roadway miles" AS fhwa_miles,
+  h."total dvmt" AS fhwa_dvmt,
+  h."census" AS fhwa_census,
+  h."net land area" AS fhwa_area
 FROM cities c
 LEFT JOIN dist d
   ON d.city = c.city AND d.state_id = c.state_id
@@ -82,6 +87,8 @@ LEFT JOIN renewables r
   ON POSITION(c.city IN r."Buyer Name") > 0 AND r.State = c.state_name
 LEFT JOIN network n
   ON n.city = c.city AND n.state = c.state_id
+LEFT JOIN highway h
+  ON POSITION(c.city IN h."area") > 0 AND POSITION(c.state_id IN h."area") > 0
 WHERE c.population > 50000
 GROUP BY
   c.city,
@@ -104,6 +111,10 @@ GROUP BY
   transport_gas_co2e,
   transport_diesel_co2e,
   n.area_km,
-  n.street_length_total;
+  n.street_length_total,
+  fhwa_miles,
+  fhwa_dvmt,
+  fhwa_census,
+  fhwa_area;
 
 COPY out TO 'output.csv' (FORMAT CSV, HEADER TRUE);
